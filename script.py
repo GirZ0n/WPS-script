@@ -10,12 +10,11 @@ class Violation:
     file_path: str
     line: int
     column: int
-    type: str
-    code: int
+    violation_code: str
     description: str
 
     def __str__(self):
-        return f"{self.file_path}:{self.line}:{self.column} {self.type}{self.code} {self.description}"
+        return f"{self.file_path}:{self.line}:{self.column} {self.violation_code} {self.description}"
 
 
 def parse(*file_paths: str) -> List[Violation]:
@@ -24,9 +23,19 @@ def parse(*file_paths: str) -> List[Violation]:
     violations = []
 
     for line in map(str, output.stdout.splitlines()):
-        pattern = re.compile(
-            r"(?P<file_path>.*)[:](?P<line>\d+)[:](?P<column>\d+)[:] (?P<type>[^\d\W]+)(?P<code>\d+) (?P<description>.*)"
-        )
+        pattern = re.compile(r"""
+        (?P<file_path>.*) # До первой ":" находится путь к файлу
+        [:]
+        (?P<line>\d+) # После первой ":" идет номер строки
+        [:]
+        (?P<column>\d+) # Далее, номер столбца
+        [:]
+        \s 
+        (?P<violation_code>[\w]+) # Код нарушения отделён пробелами 
+        \s
+        (?P<description>.*) # Всё что идёт после кода нарушения является описанием ошибки
+        """, re.VERBOSE)
+
         if not pattern.search(line):
             break
 
