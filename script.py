@@ -6,13 +6,14 @@ from typing import List
 from data_classes import Violation, Category
 
 
-def parse(*file_paths: str) -> List[Violation]:
+def get_violations(*file_paths: str) -> List[Violation]:
     output = subprocess.run(["flake8", *file_paths], capture_output=True, text=True)
 
     violations = []
 
     for line in map(str, output.stdout.splitlines()):
-        violation_pattern = re.compile(r"""
+        violation_pattern = re.compile(
+            r"""
         (?P<file_path>.*) # До первой ":" находится путь к файлу
         [:]
         (?P<line>\d+) # После первой ":" идет номер строки
@@ -24,7 +25,9 @@ def parse(*file_paths: str) -> List[Violation]:
         (?P<code>\d{3}) # Код нарушения содержит ровно 3 цифры
         \s
         (?P<description>.*) # Всё что идёт после кода нарушения является описанием ошибки
-        """, re.VERBOSE)
+        """,
+            re.VERBOSE,
+        )
 
         if not violation_pattern.search(line):
             break
@@ -46,7 +49,7 @@ def print_grouped(violations: List[Violation]):
 
     remaining: List[Violation] = violations
 
-    current_index: int = 1
+    current_index = 1
     for category in categories:
         filtered_violations = list(
             filter(
@@ -64,23 +67,21 @@ def print_grouped(violations: List[Violation]):
 
 
 def print_category(category_name: str, violations: List[Violation], start_index: int):
-    current_index = start_index
     if violations:
         print(category_name)
-        for elem in violations:
-            print(f"{current_index}\t{elem}")
-            current_index += 1
+        for index, violation in enumerate(violations, start_index):
+            print(f"{index}\t{violation}")
         print()
 
 
-def script(*file_paths: str):
-    violations = parse(*file_paths)
+def main(*file_paths: str):
+    violations = get_violations(*file_paths)
     # print_with_numbers(violations)
     print_grouped(violations)
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        script(*sys.argv[1:])
+        main(*sys.argv[1:])
     else:
         print("Error: specify the path to the files.")
