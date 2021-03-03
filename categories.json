@@ -1,0 +1,9 @@
+[
+    {"name": "WPS: System", "code_prefix": "WPS", "code_boundaries": [0, 100]},
+    {"name": "WPS: Naming", "code_prefix": "WPS", "code_boundaries": [100, 200]},
+    {"name": "WPS: Complexity", "code_prefix": "WPS", "code_boundaries": [200, 300]},
+    {"name": "WPS: Consistency", "code_prefix": "WPS", "code_boundaries": [300, 400]},
+    {"name": "WPS: Best practices", "code_prefix": "WPS", "code_boundaries": [400, 500]},
+    {"name": "WPS: Refactoring", "code_prefix": "WPS", "code_boundaries": [500, 600]},
+    {"name": "WPS: OOP", "code_prefix": "WPS", "code_boundaries": [600, 700]}
+]
