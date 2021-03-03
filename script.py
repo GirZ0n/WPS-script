@@ -2,8 +2,8 @@ import json
 import re
 import subprocess
 import sys
-
-from data_classes import *
+from typing import List
+from data_classes import Violation, Category
 
 
 def parse(*file_paths: str) -> List[Violation]:
@@ -12,36 +12,55 @@ def parse(*file_paths: str) -> List[Violation]:
     violations = []
 
     for line in map(str, output.stdout.splitlines()):
-        violation_pattern = re.compile(
-            r"""
+        violation_pattern = re.compile(r"""
         (?P<file_path>.*) # До первой ":" находится путь к файлу
         [:]
         (?P<line>\d+) # После первой ":" идет номер строки
         [:]
         (?P<column>\d+) # Далее, номер столбца
         [:]
-        \s 
+        \s
         (?P<code_prefix>\w+) # Код (включая префикс) нарушения отделён пробелами
         (?P<code>\d{3}) # Код нарушения содержит ровно 3 цифры
         \s
         (?P<description>.*) # Всё что идёт после кода нарушения является описанием ошибки
-        """,
-            re.VERBOSE,
-        )
+        """, re.VERBOSE)
 
         if not violation_pattern.search(line):
             break
 
         groups = violation_pattern.search(line).groupdict()
-        violation = Violation(**groups)
-        violations.append(violation)
+        violations.append(Violation(**groups))
 
     return violations
 
 
 def print_with_numbers(violations: List[Violation]):
-    for i, violation in enumerate(violations, 1):
-        print(f"{i}\t{violation}")
+    for index, violation in enumerate(violations, 1):
+        print(f"{index}\t{violation}")
+
+
+def print_grouped(violations: List[Violation]):
+    with open("categories.json") as input_file:
+        categories: List[Category] = json.load(input_file, object_hook=lambda dct: Category(**dct))
+
+    remaining: List[Violation] = violations
+
+    current_index: int = 1
+    for category in categories:
+        filtered_violations = list(
+            filter(
+                lambda violation: violation.code_prefix == category.code_prefix
+                and int(violation.code) in range(*category.code_boundaries),
+                remaining,
+            )
+        )
+        remaining = [elem for elem in remaining if elem not in filtered_violations]
+
+        print_category(category.name, filtered_violations, current_index)
+        current_index += len(filtered_violations)
+
+    print_category("Others", remaining, current_index)
 
 
 def print_category(category_name: str, violations: List[Violation], start_index: int):
@@ -52,30 +71,6 @@ def print_category(category_name: str, violations: List[Violation], start_index:
             print(f"{current_index}\t{elem}")
             current_index += 1
         print()
-
-
-def print_grouped(violations: List[Violation]):
-    with open("categories.json") as f:
-        categories: List[Category] = json.load(f, object_hook=lambda items: Category(**items))
-
-    remaining: List[Violation] = violations
-
-    current_index: int = 1
-    for category in categories:
-        code_prefix: str = category.code_prefix
-        code_boundaries: List[int] = category.code_boundaries
-        filtered_violations = list(
-            filter(
-                lambda violation: violation.code_prefix == code_prefix and violation.code in range(*code_boundaries),
-                remaining,
-            )
-        )
-        remaining = [x for x in remaining if x not in filtered_violations]
-
-        print_category(category.name, filtered_violations, current_index)
-        current_index += len(filtered_violations)
-
-    print_category("Others", remaining, current_index)
 
 
 def script(*file_paths: str):
