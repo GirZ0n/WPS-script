@@ -7,6 +7,7 @@ from data_classes import Violation, Category
 
 
 def get_violations(*file_paths: str) -> List[Violation]:
+    """Checks files with flake8 and returns a list of all violations found."""
     output = subprocess.run(["flake8", *file_paths], capture_output=True, text=True)
 
     violations = []
@@ -38,12 +39,14 @@ def get_violations(*file_paths: str) -> List[Violation]:
     return violations
 
 
-def print_with_numbers(violations: List[Violation]):
+def print_with_numbering(violations: List[Violation]):
+    """Prints found violations with numbering."""
     for index, violation in enumerate(violations, 1):
         print(f"{index}\t{violation}")
 
 
 def print_grouped(violations: List[Violation]):
+    """Prints found violations with numbering, sorted into groups."""
     with open("categories.json") as input_file:
         categories: List[Category] = json.load(input_file, object_hook=lambda dct: Category(**dct))
 
@@ -67,6 +70,7 @@ def print_grouped(violations: List[Violation]):
 
 
 def print_category(category_name: str, violations: List[Violation], start_index: int):
+    """Prints the category name and a numbered list of violations."""
     if violations:
         print(category_name)
         for index, violation in enumerate(violations, start_index):
